@@ -1,0 +1,75 @@
+ID: tinyworld
+_schema-version: '2.1'
+description: tinyworld
+parameters:
+  deploy_mode: html5-repo
+version: 0.0.1
+modules:
+  - name: tinyworld-approuter
+    type: approuter.nodejs
+    path: tinyworld-approuter
+    parameters:
+      disk-quota: 256M
+      memory: 256M
+    requires:
+      - name: tinyworld_html5_repo_runtime
+      - name: uaa_tinyworld
+  - name: tinyworld_ui_deployer
+    type: com.sap.html5.application-content
+    path: tinyworld_ui_deployer
+    requires:
+      - name: tinyworld_html5_repo_host
+    build-parameters:
+      requires:
+        - name: tinyui
+          artifacts:
+            - './*'
+          target-path: resources/tinyui
+  - name: tinydb
+    type: hdb
+    path: tinydb
+    requires:
+      - name: hdi_tinydb
+  - name: tinyjs
+    type: nodejs
+    path: tinyjs
+    provides:
+      - name: tinyjs_api
+        properties:
+          url: '${default-url}'
+  - name: tinyui
+    type: html5
+    path: tinyui
+    build-parameters:
+      builder: custom
+      commands:
+        - npm install
+        - npm run build
+      supported-platforms: []
+      build-result: dist
+resources:
+  - name: tinyworld_html5_repo_runtime
+    parameters:
+      service-plan: app-runtime
+      service: html5-apps-repo
+    type: org.cloudfoundry.managed-service
+  - name: tinyworld_html5_repo_host
+    parameters:
+      service-plan: app-host
+      service: html5-apps-repo
+    type: org.cloudfoundry.managed-service
+  - name: hdi_tinydb
+    properties:
+      hdi-container-name: '${service-name}'
+    type: com.sap.xs.hdi-container
+  - name: uaa_tinyworld
+    parameters:
+      path: ./xs-security.json
+      service-plan: application
+      service: xsuaa
+    type: org.cloudfoundry.managed-service
+  - name: dest_tinyworld
+    parameters:
+      service-plan: lite
+      service: destination
+    type: org.cloudfoundry.managed-service
